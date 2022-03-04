@@ -1,6 +1,7 @@
 const { v4: uuid } = require('uuid');
 const HttpError = require('../models/http-error');
 const { validationResult } = require('express-validator');
+const getCoordsForAddress = require('../util/location');
 
 let DUMMY_PLACES = [
     {
@@ -41,13 +42,19 @@ const getPlacesByUserId = (req, res, next) => {
 
 };
 
-const createdPlace = (req, res, next) => {
+const createdPlace = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         //console.log(errors);
-        throw new HttpError('Invalid inputs passed, please check your data', 422);
+        return next(new HttpError('Invalid inputs passed, please check your data', 422));
     }
-    const { title, description, coordinates, address, creator } = req.body;
+    const { title, description, address, creator } = req.body;
+    let coordinates;
+    try {
+        coordinates = await getCoordsForAddress(address);
+    } catch(error){
+        return next(error);
+    }
     // same like - const title = req.body.title
     const createdPlace = {
         id: uuid(),
@@ -84,6 +91,9 @@ const updatePlace = (req, res, next) => {
 
 const deletePlace = (req, res, next) => {
     placeId = req.params.pid;
+    if (DUMMY_PLACES.find(p => p.id === placeId)){
+        throw new HttpError('Could not find a place for that id', 404);
+    }
     DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== placeId);
     res.status(200).json({ message: "Deleted place " });
 };
