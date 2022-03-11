@@ -1,16 +1,8 @@
-const { v4: uuid } = require('uuid');
 const HttpError = require('../models/http-error');
 const { validationResult } = require('express-validator');
 const User = require('../models/user');
-const user = require('../models/user');
-const DUMMY_USERS = [
-    {
-        id: 'u1',
-        name: 'Rotem Librati',
-        email: 'rotem@gmail.com',
-        password: 'rotem'
-    }
-]
+
+
 
 const getUsers = async (req, res, next) => {
     let users;
@@ -30,7 +22,7 @@ const signup = async (req, res, next) => {
         return next(new HttpError('Invalid inputs passed, please check your data', 422));
     }
 
-    const { name, email, password, places } = req.body;
+    const { name, email, password } = req.body;
     let existingUser;
     try {
         existingUser = await User.findOne({ email: email }) // בודק אם קיים כזה
@@ -47,7 +39,7 @@ const signup = async (req, res, next) => {
         email,
         image: 'dsasdasa',
         password,
-        places
+        places: []
     });
     try {
         await createUser.save();
