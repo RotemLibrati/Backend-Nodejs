@@ -2,6 +2,7 @@ const { v4: uuid } = require('uuid');
 const HttpError = require('../models/http-error');
 const { validationResult } = require('express-validator');
 const getCoordsForAddress = require('../util/location');
+const Place = require('../models/place');
 
 let DUMMY_PLACES = [
     {
@@ -56,15 +57,24 @@ const createdPlace = async (req, res, next) => {
         return next(error);
     }
     // same like - const title = req.body.title
-    const createdPlace = {
-        id: uuid(),
-        title: title, // same like - title,
+    const createdPlace = new Place({
+        title: title,
         description,
-        location: coordinates,
         address,
+        location: coordinates,
+        image: 'sdasadas',
         creator
-    };
-    DUMMY_PLACES.push(createdPlace);
+    });
+    try {
+        await createdPlace.save();
+    } catch (err) {
+        console.log(err);
+        const error = new HttpError(
+            'Creating place failed, please try again', 500
+        );
+        return next(error); //אם לא נרשום את זה הקוד ימשיך למרות השגיאה 
+    }
+    
 
     res.status(201).json({ place: createdPlace });
 };
